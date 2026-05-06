@@ -3,7 +3,7 @@ import numpy as np
 from pathlib import Path
 
 class FeatureEngineer:
-    def __init__(self, input_path: str = "../dataset/processed/merged_player_data.csv"):
+    def __init__(self, input_path: str = "../dataset/processed/cleaned_player_data.csv"):
         self.input_path = Path(input_path)
         
     def load_data(self):
