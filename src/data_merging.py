@@ -295,7 +295,7 @@ class DataMerger:
 
         return merged
 
-    def save_merged_data(self, output_path: str = ".venv/dataset/processed/merged_player_data.csv"):
+    def save_merged_data(self, output_path: str = "../dataset/processed/merged_player_data.csv"):
         """Merge and save final dataset"""
         merged = self.merge_all()
 
