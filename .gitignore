@@ -1,0 +1,38 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Environments
+.env
+.venv/
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# IDEs
+.idea/
+.vscode/
+
+# Jupyter Notebooks
+.ipynb_checkpoints
+
+# Datasets
+# Exclude datasets to avoid large file commits and git bloat
+dataset/raw/*
+dataset/processed/*
+!dataset/raw/.gitkeep
+!dataset/processed/.gitkeep
+*.csv
+*.xlsx
+*.zip
+*.tar.gz
+*.parquet
+*.h5
+*.npy
+
+# OS specific
+.DS_Store
+Thumbs.db
