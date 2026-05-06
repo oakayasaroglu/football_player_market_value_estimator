@@ -51,12 +51,6 @@ class DataMerger:
             'clean_sheets': 'sum'
         }).reset_index()
 
-        # Calculate derived metrics
-        perf_agg['goals_per_game'] = perf_agg['goals'] / perf_agg['nb_in_group'].replace(0, np.nan)
-        perf_agg['assists_per_game'] = perf_agg['assists'] / perf_agg['nb_in_group'].replace(0, np.nan)
-        perf_agg['minutes_per_game'] = perf_agg['minutes_played'] / perf_agg['nb_in_group'].replace(0, np.nan)
-        perf_agg['started_ratio'] = perf_agg['nb_on_pitch'] / perf_agg['nb_in_group'].replace(0, np.nan)
-
         # Rename columns
         perf_agg.columns = ['player_id'] + [f'career_{col}' if col != 'player_id' else col
                                              for col in perf_agg.columns[1:]]
@@ -95,10 +89,6 @@ class DataMerger:
             'yellow_cards': 'sum'
         }).reset_index()
 
-        # Calculate recent metrics
-        recent_agg['recent_goals_per_game'] = recent_agg['goals'] / recent_agg['nb_in_group'].replace(0, np.nan)
-        recent_agg['recent_assists_per_game'] = recent_agg['assists'] / recent_agg['nb_in_group'].replace(0, np.nan)
-
         recent_agg.columns = ['player_id'] + [f'recent_{col}' if col != 'player_id' else col
                                                for col in recent_agg.columns[1:]]
 
@@ -114,7 +104,6 @@ class DataMerger:
         }).reset_index()
 
         nat_agg.columns = ['player_id', 'national_matches', 'national_goals']
-        nat_agg['national_goals_per_match'] = nat_agg['national_goals'] / nat_agg['national_matches'].replace(0, np.nan)
 
         return nat_agg
 
@@ -129,7 +118,6 @@ class DataMerger:
         }).reset_index()
 
         injury_agg.columns = ['player_id', 'total_days_injured', 'total_games_missed', 'injury_count']
-        injury_agg['avg_injury_days'] = injury_agg['total_days_injured'] / injury_agg['injury_count']
 
         # Get most recent injury date
         last_injury = self.injuries.sort_values('end_date', ascending=False).groupby('player_id').first()[['end_date']].reset_index()
@@ -167,36 +155,17 @@ class DataMerger:
 
         profiles = self.profiles.copy()
 
-        # Determine reference date dynamically from dataset
-        if 'date_unix' in self.latest_value.columns:
-            reference_date = pd.to_datetime(self.latest_value['date_unix'], errors='coerce').max()
-        elif 'date' in self.latest_value.columns:
-            reference_date = pd.to_datetime(self.latest_value['date'], errors='coerce').max()
-        else:
-            reference_date = pd.Timestamp.now()
-            
-        print(f"Using reference date: {reference_date.date()} for profile calculations")
-
-        # Calculate age
-        profiles['date_of_birth'] = pd.to_datetime(profiles['date_of_birth'], errors='coerce')
-        profiles['age'] = (reference_date - profiles['date_of_birth']).dt.days / 365.25
-
-        # Calculate contract remaining days
-        profiles['contract_expires'] = pd.to_datetime(profiles['contract_expires'], errors='coerce')
-        profiles['contract_days_remaining'] = (profiles['contract_expires'] - reference_date).dt.days
-
-        # Parse joined date
-        profiles['joined'] = pd.to_datetime(profiles['joined'], errors='coerce')
-        profiles['days_at_current_club'] = (reference_date - profiles['joined']).dt.days
-
-        # Select relevant columns
+        # Select relevant columns, preserving raw dates for feature engineering
         profile_cols = [
-            'player_id', 'player_name', 'age', 'height', 'position', 'main_position', 'foot',
+            'player_id', 'player_name', 'date_of_birth', 'height', 'position', 'main_position', 'foot',
             'citizenship', 'is_eu', 'current_club_id', 'current_club_name',
-            'contract_days_remaining', 'days_at_current_club', 'country_of_birth'
+            'contract_expires', 'joined', 'country_of_birth'
         ]
 
-        return profiles[profile_cols]
+        # Ensure we only pick columns that exist to prevent KeyErrors
+        existing_cols = [col for col in profile_cols if col in profiles.columns]
+
+        return profiles[existing_cols]
 
     def merge_all(self):
         """Merge all data sources"""
@@ -256,10 +225,6 @@ class DataMerger:
             'career_subed_out': 0,
             'career_goals_conceded': 0,
             'career_clean_sheets': 0,
-            'career_goals_per_game': 0,
-            'career_assists_per_game': 0,
-            'career_minutes_per_game': 0,
-            'career_started_ratio': 0,
             
             # Recent
             'recent_goals': 0,
@@ -267,19 +232,15 @@ class DataMerger:
             'recent_minutes_played': 0,
             'recent_nb_in_group': 0,
             'recent_yellow_cards': 0,
-            'recent_goals_per_game': 0,
-            'recent_assists_per_game': 0,
 
             # National
             'national_matches': 0,
             'national_goals': 0,
-            'national_goals_per_match': 0,
 
             # Injuries
             'injury_count': 0,
             'total_days_injured': 0,
             'total_games_missed': 0,
-            'avg_injury_days': 0,
 
             # Transfers
             'transfer_count': 0,
