@@ -41,6 +41,25 @@ class DataCleaner:
             print(f"Dropped {dropped} players with missing date of birth.")
         return df
 
+    def clean_nationality_data(self, df):
+        """Impute country_of_birth from citizenship and drop if both are missing."""
+        print("Cleaning nationality data...")
+        initial_len = len(df)
+        
+        if 'country_of_birth' in df.columns and 'citizenship' in df.columns:
+            # Fill missing country_of_birth with citizenship
+            missing_before = df['country_of_birth'].isna().sum()
+            df['country_of_birth'] = df['country_of_birth'].fillna(df['citizenship'])
+            filled = missing_before - df['country_of_birth'].isna().sum()
+            print(f"Filled {filled} missing values in 'country_of_birth' using 'citizenship'.")
+            
+            # Drop rows where citizenship is missing
+            df = df.dropna(subset=['citizenship'])
+            dropped = initial_len - len(df)
+            print(f"Dropped {dropped} players with missing 'citizenship'.")
+            
+        return df
+
     def run_pipeline(self, output_path: str = "../dataset/processed/cleaned_player_data.csv"):
         print("\n" + "="*50)
         print("Starting data cleaning process...")
@@ -51,6 +70,7 @@ class DataCleaner:
         # Temizleme adımları
         df = self.clean_target_variable(df)
         df = self.drop_missing_critical_features(df)
+        df = self.clean_nationality_data(df)
         df = self.impute_missing_categorical(df)
         
         # Çıktı klasörünü oluştur
