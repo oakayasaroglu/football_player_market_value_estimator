@@ -247,7 +247,8 @@ class DataMerger:
             'total_transfer_fees': 0,
             'max_transfer_fee': 0,
             'avg_transfer_fee': 0,
-            'max_value_at_transfer': 0
+            'max_value_at_transfer': 0,
+            'last_transfer_fee': 0
         })
 
         print(f"\n{'='*50}")
