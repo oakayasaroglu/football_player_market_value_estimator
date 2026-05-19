@@ -36,3 +36,6 @@ dataset/processed/*
 # OS specific
 .DS_Store
 Thumbs.db
+
+# Exclude large models
+results/saved_models/random_forest.pkl
