@@ -5,6 +5,7 @@ import os
 import matplotlib.pyplot as plt
 import seaborn as sns
 from pathlib import Path
+import joblib
 
 # Metrics
 from sklearn.metrics import r2_score, mean_squared_error, mean_absolute_error
@@ -25,7 +26,9 @@ class ModelBenchmarker:
         base_dir = Path(__file__).parent.parent
         self.input_dir = Path(input_dir) if input_dir else base_dir / "dataset" / "model_input"
         self.output_dir = Path(output_dir) if output_dir else base_dir / "results"
+        self.models_dir = self.output_dir / "saved_models"
         self.output_dir.mkdir(parents=True, exist_ok=True)
+        self.models_dir.mkdir(parents=True, exist_ok=True)
         self.results = []
         
     def load_data(self):
@@ -45,6 +48,26 @@ class ModelBenchmarker:
         print(f"X_train shape: {self.X_train.shape}, y_train shape: {self.y_train.shape}")
         print(f"X_test shape: {self.X_test.shape}, y_test shape: {self.y_test.shape}")
         
+    def save_trained_model(self, model, model_name: str):
+        safe_name = model_name.replace(" ", "_").lower()
+        if model_name == "TabNet":
+            # TabNet automatically appends .zip
+            save_path = self.models_dir / safe_name
+            model.save_model(str(save_path))
+            print(f"Model saved to {save_path}.zip")
+        elif model_name == "CatBoost":
+            save_path = self.models_dir / f"{safe_name}.cbm"
+            model.save_model(str(save_path))
+            print(f"Model saved to {save_path}")
+        elif model_name == "XGBoost":
+            save_path = self.models_dir / f"{safe_name}.json"
+            model.save_model(str(save_path))
+            print(f"Model saved to {save_path}")
+        else:
+            save_path = self.models_dir / f"{safe_name}.pkl"
+            joblib.dump(model, save_path)
+            print(f"Model saved to {save_path}")
+
     def evaluate_model(self, model_name: str, y_true, y_pred, training_time: float):
         r2 = r2_score(y_true, y_pred)
         rmse = np.sqrt(mean_squared_error(y_true, y_pred))
@@ -67,6 +90,7 @@ class ModelBenchmarker:
         start_time = time.time()
         ridge.fit(self.X_train, self.y_train)
         ridge_time = time.time() - start_time
+        self.save_trained_model(ridge, "Ridge Regression")
         self.evaluate_model("Ridge Regression", self.y_test, ridge.predict(self.X_test), ridge_time)
         
         # 2. Random Forest Regressor (Baseline Tree)
@@ -75,14 +99,16 @@ class ModelBenchmarker:
         start_time = time.time()
         rf.fit(self.X_train, self.y_train)
         rf_time = time.time() - start_time
+        self.save_trained_model(rf, "Random Forest")
         self.evaluate_model("Random Forest", self.y_test, rf.predict(self.X_test), rf_time)
         
         # 3. XGBoost
         print("\n--- Training XGBoost ---")
-        xgb = XGBRegressor(n_estimators=500, learning_rate=0.05, random_state=42, n_jobs=-1)
+        xgb = XGBRegressor(n_estimators=500, learning_rate=0.05, random_state=42, tree_method='hist', device='cuda')
         start_time = time.time()
         xgb.fit(self.X_train, self.y_train)
         xgb_time = time.time() - start_time
+        self.save_trained_model(xgb, "XGBoost")
         self.evaluate_model("XGBoost", self.y_test, xgb.predict(self.X_test), xgb_time)
         
         # 4. LightGBM
@@ -91,14 +117,16 @@ class ModelBenchmarker:
         start_time = time.time()
         lgb.fit(self.X_train, self.y_train)
         lgb_time = time.time() - start_time
+        self.save_trained_model(lgb, "LightGBM")
         self.evaluate_model("LightGBM", self.y_test, lgb.predict(self.X_test), lgb_time)
         
         # 5. CatBoost
         print("\n--- Training CatBoost ---")
-        cat = CatBoostRegressor(iterations=500, learning_rate=0.05, random_seed=42, verbose=0)
+        cat = CatBoostRegressor(iterations=500, learning_rate=0.05, random_seed=42, verbose=0, task_type='GPU')
         start_time = time.time()
         cat.fit(self.X_train, self.y_train)
         cat_time = time.time() - start_time
+        self.save_trained_model(cat, "CatBoost")
         self.evaluate_model("CatBoost", self.y_test, cat.predict(self.X_test), cat_time)
         
         # 6. TabNet
@@ -129,6 +157,7 @@ class ModelBenchmarker:
             virtual_batch_size=128
         )
         tabnet_time = time.time() - start_time
+        self.save_trained_model(tabnet, "TabNet")
         
         preds_tabnet = tabnet.predict(X_test_np).ravel()
         self.evaluate_model("TabNet", self.y_test, preds_tabnet, tabnet_time)
