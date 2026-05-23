@@ -39,3 +39,7 @@ Thumbs.db
 
 # Exclude large models
 results/saved_models/random_forest.pkl
+
+# Other generated directories
+catboost_info/
+dataset/model_input/
