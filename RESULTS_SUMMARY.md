@@ -11,7 +11,6 @@ Makine öğrenmesi ve derin öğrenme modellerimizin futbolcu piyasa değeri tah
 | **Random Forest** | %80.19 (0.8019) | 1.713.539 | **323.614** | 52.86 sn |
 | **XGBoost** | %77.63 (0.7763) | 1.820.758 | 331.593 | 4.12 sn |
 | **Ridge Regression** | %63.41 (0.6341) | 2.328.664 | 729.421 | 0.04 sn |
-| **TabNet** | %27.44 (0.2744) | 3.279.345 | 739.573 | 599.83 sn |
 
 *(Not: R2 Skorunun 1'e yani %100'e yakın olması, RMSE ve MAE değerlerinin ise düşük olması daha iyidir.)*
 
@@ -19,7 +18,6 @@ Makine öğrenmesi ve derin öğrenme modellerimizin futbolcu piyasa değeri tah
 
 1. **En Başarılı Model:** Gerek yüksek doğruluk oranı (%82.10 R2) gerekse inanılmaz hızlı eğitim süresi (yaklaşık 4 saniye) ile **LightGBM** bu veri seti için açık ara en iyi tercih olarak öne çıkmaktadır.
 2. **Ortalama Mutlak Hata (MAE):** MAE bakımından en düşük hatayı veren model **Random Forest** (ortalama 323.000 €'luk sapma) olmuştur. Ancak eğitim süresi diğer ağaç bazlı modellere kıyasla daha uzun sürmektedir (53 saniye).
-3. **Derin Öğrenme (TabNet):** TabNet algoritması, tablo verisi üzerinde standart parametreleriyle ağaç tabanlı algoritmaların oldukça gerisinde kalarak %27'lik düşük bir açıklayıcılık oranı sunmuştur. Aynı zamanda eğitilmesi en uzun süren modeldir (yaklaşık 10 dakika). Bu durum, tablo (tabular) verilerinde karar ağacı tabanlı algoritmaların (özellikle gradient boosting) derin öğrenme modellerinden genellikle daha iyi performans gösterdiği gerçeğini bir kez daha doğrulamaktadır.
 
 ## Çıktılar
 

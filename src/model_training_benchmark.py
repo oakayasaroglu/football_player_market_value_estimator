@@ -17,9 +17,7 @@ from xgboost import XGBRegressor
 from lightgbm import LGBMRegressor
 from catboost import CatBoostRegressor
 
-# TabNet
-from pytorch_tabnet.tab_model import TabNetRegressor
-import torch
+
 
 class ModelBenchmarker:
     def __init__(self, input_dir: str = None, output_dir: str = None):
@@ -50,12 +48,7 @@ class ModelBenchmarker:
         
     def save_trained_model(self, model, model_name: str):
         safe_name = model_name.replace(" ", "_").lower()
-        if model_name == "TabNet":
-            # TabNet automatically appends .zip
-            save_path = self.models_dir / safe_name
-            model.save_model(str(save_path))
-            print(f"Model saved to {save_path}.zip")
-        elif model_name == "CatBoost":
+        if model_name == "CatBoost":
             save_path = self.models_dir / f"{safe_name}.cbm"
             model.save_model(str(save_path))
             print(f"Model saved to {save_path}")
@@ -129,38 +122,6 @@ class ModelBenchmarker:
         self.save_trained_model(cat, "CatBoost")
         self.evaluate_model("CatBoost", self.y_test, cat.predict(self.X_test), cat_time)
         
-        # 6. TabNet
-        print("\n--- Training TabNet ---")
-        # TabNet requires 2D arrays for target and numpy arrays for features
-        X_train_np = self.X_train.values
-        X_test_np = self.X_test.values
-        y_train_np = self.y_train.reshape(-1, 1)
-        y_test_np = self.y_test.reshape(-1, 1)
-        
-        tabnet = TabNetRegressor(
-            optimizer_fn=torch.optim.Adam,
-            optimizer_params=dict(lr=2e-2),
-            scheduler_params={"step_size":10, "gamma":0.9},
-            scheduler_fn=torch.optim.lr_scheduler.StepLR,
-            mask_type='entmax',
-            verbose=0
-        )
-        
-        start_time = time.time()
-        tabnet.fit(
-            X_train=X_train_np, y_train=y_train_np,
-            eval_set=[(X_test_np, y_test_np)],
-            eval_metric=['rmse'],
-            max_epochs=100,
-            patience=10,
-            batch_size=256,
-            virtual_batch_size=128
-        )
-        tabnet_time = time.time() - start_time
-        self.save_trained_model(tabnet, "TabNet")
-        
-        preds_tabnet = tabnet.predict(X_test_np).ravel()
-        self.evaluate_model("TabNet", self.y_test, preds_tabnet, tabnet_time)
 
     def save_and_plot_results(self):
         df_results = pd.DataFrame(self.results)

@@ -9,7 +9,6 @@ Uygulamamız makine öğrenmesi ve derin öğrenme tabanlı birden fazla regresy
 *   **XGBoost**: `tree_method='hist'` ve `device='cuda'` parametreleri ile GPU hızlandırması kullanır.
 *   **LightGBM**: Hızlı ve hafif ağaç tabanlı model
 *   **CatBoost**: `task_type='GPU'` parametresi ile GPU hızlandırması kullanır.
-*   **TabNet**: PyTorch tabanlı Derin Öğrenme (Deep Learning) modeli, GPU yeteneklerinden faydalanır.
 
 ## 💾 Model Kaydetme Sistemi
 Eğitim süresinden tasarruf etmek ve eğitilmiş modelleri canlı (inference) sistemlerde kullanabilmek için, her algoritma eğitim sonrasında otomatik olarak `results/saved_models/` dizini altına kaydedilir.
@@ -18,7 +17,6 @@ Formatlar şu şekildedir:
 *   **Ridge, Random Forest, LightGBM:** `.pkl` (joblib kütüphanesi ile)
 *   **XGBoost:** `.json` (kendi yerleşik save_model metodu ile)
 *   **CatBoost:** `.cbm` (kendi yerleşik save_model metodu ile)
-*   **TabNet:** `.zip` (kendi yerleşik save_model metodu ile)
 
 ## 📊 Raporlama ve Çıktılar
 Eğitimler bittikten sonra modeller şu metrikler üzerinden değerlendirilir:

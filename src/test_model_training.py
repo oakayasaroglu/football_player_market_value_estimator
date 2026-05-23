@@ -16,9 +16,7 @@ from xgboost import XGBRegressor
 from lightgbm import LGBMRegressor
 from catboost import CatBoostRegressor
 
-# TabNet
-from pytorch_tabnet.tab_model import TabNetRegressor
-import torch
+
 
 class ModelBenchmarkerTest:
     def __init__(self, input_dir: str = None, output_dir: str = None):
@@ -96,26 +94,6 @@ class ModelBenchmarkerTest:
         cat.fit(self.X_train, self.y_train)
         self.evaluate_model("CatBoost", self.y_test, cat.predict(self.X_test), time.time() - start_time)
         
-        # 6. TabNet (Only 1 epoch)
-        print("\n--- Testing TabNet ---")
-        X_train_np = self.X_train.values
-        X_test_np = self.X_test.values
-        y_train_np = self.y_train.reshape(-1, 1)
-        y_test_np = self.y_test.reshape(-1, 1)
-        
-        tabnet = TabNetRegressor(optimizer_fn=torch.optim.Adam, verbose=0)
-        
-        start_time = time.time()
-        tabnet.fit(
-            X_train=X_train_np, y_train=y_train_np,
-            eval_set=[(X_test_np, y_test_np)],
-            eval_metric=['rmse'],
-            max_epochs=1,
-            batch_size=64,
-            virtual_batch_size=32
-        )
-        preds_tabnet = tabnet.predict(X_test_np).ravel()
-        self.evaluate_model("TabNet", self.y_test, preds_tabnet, time.time() - start_time)
 
     def save_and_plot_results(self):
         df_results = pd.DataFrame(self.results)
