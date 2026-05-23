@@ -21,13 +21,16 @@ from lightgbm import LGBMRegressor
 from catboost import CatBoostRegressor
 
 class HPOTunerBenchmark:
-    def __init__(self, input_dir: str = None, output_dir: str = None, n_trials: int = 50):
+    def __init__(self, input_dir: str = None, output_dir: str = None, n_trials: int = 50, test_mode: bool = False):
         base_dir = Path(__file__).parent.parent
         self.input_dir = Path(input_dir) if input_dir else base_dir / "dataset" / "model_input"
         self.output_dir = Path(output_dir) if output_dir else base_dir / "results"
         self.output_dir.mkdir(parents=True, exist_ok=True)
         self.results = []
-        self.n_trials = n_trials
+        self.test_mode = test_mode
+        self.n_trials = 1 if test_mode else n_trials
+        self.min_iters = 2 if test_mode else 100
+        self.max_iters = 5 if test_mode else 500
         
         # Suppress Optuna logs unless it's an error to keep console clean
         optuna.logging.set_verbosity(optuna.logging.WARNING)
@@ -123,14 +126,16 @@ class HPOTunerBenchmark:
         
         # Baseline
         start = time.time()
-        base_model = RandomForestRegressor(random_state=42, n_jobs=-1)
+        base_model = RandomForestRegressor(n_estimators=self.min_iters, random_state=42, n_jobs=-1)
         base_model.fit(self.X_train, self.y_train)
         self.evaluate_model("Random Forest", "Baseline", self.y_test, base_model.predict(self.X_test), time.time() - start)
         
         # Optuna Objective
         def objective(trial):
+            rf_min = 2 if self.test_mode else 50
+            rf_max = 5 if self.test_mode else 100
             param = {
-                'n_estimators': trial.suggest_int('n_estimators', 50, 100, step=25),
+                'n_estimators': trial.suggest_int('n_estimators', rf_min, rf_max, step=1 if self.test_mode else 25),
                 'max_depth': trial.suggest_int('max_depth', 5, 15),
                 'min_samples_split': trial.suggest_int('min_samples_split', 2, 5),
                 'min_samples_leaf': trial.suggest_int('min_samples_leaf', 1, 3),
@@ -163,14 +168,14 @@ class HPOTunerBenchmark:
         
         # Baseline
         start = time.time()
-        base_model = XGBRegressor(random_state=42, tree_method='hist', device='cuda')
+        base_model = XGBRegressor(n_estimators=self.min_iters, random_state=42, tree_method='hist', device='cuda')
         base_model.fit(self.X_train, self.y_train)
         self.evaluate_model("XGBoost", "Baseline", self.y_test, base_model.predict(self.X_test), time.time() - start)
         
         # Optuna Objective
         def objective(trial):
             param = {
-                'n_estimators': trial.suggest_int('n_estimators', 100, 500, step=100),
+                'n_estimators': trial.suggest_int('n_estimators', self.min_iters, self.max_iters, step=1 if self.test_mode else 100),
                 'learning_rate': trial.suggest_float('learning_rate', 0.01, 0.3, log=True),
                 'max_depth': trial.suggest_int('max_depth', 3, 10),
                 'subsample': trial.suggest_float('subsample', 0.5, 1.0),
@@ -207,14 +212,14 @@ class HPOTunerBenchmark:
         
         # Baseline
         start = time.time()
-        base_model = LGBMRegressor(random_state=42, n_jobs=-1, verbose=-1)
+        base_model = LGBMRegressor(n_estimators=self.min_iters, random_state=42, n_jobs=-1, verbose=-1)
         base_model.fit(self.X_train, self.y_train)
         self.evaluate_model("LightGBM", "Baseline", self.y_test, base_model.predict(self.X_test), time.time() - start)
         
         # Optuna Objective
         def objective(trial):
             param = {
-                'n_estimators': trial.suggest_int('n_estimators', 100, 500, step=100),
+                'n_estimators': trial.suggest_int('n_estimators', self.min_iters, self.max_iters, step=1 if self.test_mode else 100),
                 'learning_rate': trial.suggest_float('learning_rate', 0.01, 0.3, log=True),
                 'max_depth': trial.suggest_int('max_depth', 3, 12),
                 'num_leaves': trial.suggest_int('num_leaves', 20, 150),
@@ -251,14 +256,14 @@ class HPOTunerBenchmark:
         
         # Baseline
         start = time.time()
-        base_model = CatBoostRegressor(random_seed=42, verbose=0, task_type='GPU')
+        base_model = CatBoostRegressor(iterations=self.min_iters, random_seed=42, verbose=0, task_type='GPU')
         base_model.fit(self.X_train, self.y_train)
         self.evaluate_model("CatBoost", "Baseline", self.y_test, base_model.predict(self.X_test), time.time() - start)
         
         # Optuna Objective
         def objective(trial):
             param = {
-                'iterations': trial.suggest_int('iterations', 100, 500, step=100),
+                'iterations': trial.suggest_int('iterations', self.min_iters, self.max_iters, step=1 if self.test_mode else 100),
                 'learning_rate': trial.suggest_float('learning_rate', 0.01, 0.3, log=True),
                 'depth': trial.suggest_int('depth', 4, 10),
                 'l2_leaf_reg': trial.suggest_float('l2_leaf_reg', 1e-3, 10.0, log=True),
@@ -333,5 +338,10 @@ class HPOTunerBenchmark:
         print("="*60)
 
 if __name__ == "__main__":
-    tuner = HPOTunerBenchmark(n_trials=50)
+    import argparse
+    parser = argparse.ArgumentParser(description="Run HPO benchmark")
+    parser.add_argument("--test", action="store_true", help="Run in fast one-shot test mode")
+    args = parser.parse_args()
+    
+    tuner = HPOTunerBenchmark(n_trials=50, test_mode=args.test)
     tuner.run_all()
