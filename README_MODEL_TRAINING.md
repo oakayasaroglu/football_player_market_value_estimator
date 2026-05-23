@@ -34,3 +34,14 @@ Model eğitim sürecini başlatmak için projenin ana dizininden şu komutu çal
 python src/model_training_benchmark.py
 ```
 Eğitim işlemi bilgisayarınızın donanımına (özellikle ekran kartınıza) göre kısa süre içerisinde tamamlanacak ve kaydedilecektir.
+
+## 🧠 Açıklanabilir Yapay Zeka (XAI)
+Modellerin kararlarını anlamlandırmak ve hangi oyuncunun neden o piyasa değerine sahip olduğunu analiz etmek için projeye **SHAP** tabanlı XAI entegrasyonu yapılmıştır.
+Analizler, benchmark sonuçlarında test setinde en yüksek başarıyı gösteren model üzerinden yapılmaktadır.
+
+XAI analizini başlatmak ve açıklama grafiklerini (Özet, Özellik Önemi ve Şelale Grafikleri) oluşturmak için aşağıdaki komutu çalıştırabilirsiniz:
+
+```bash
+python src/xai_analysis.py
+```
+Oluşturulan grafikler `results/xai_plots/` dizinine kaydedilecektir.
