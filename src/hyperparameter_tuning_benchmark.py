@@ -62,6 +62,23 @@ class HPOTunerBenchmark:
         
         print(f"{model_name} ({phase}) - R2: {r2:.4f} | RMSE: {rmse:.4f} | MAE: {mae:.4f} | Time: {exec_time:.2f}s")
 
+    def save_trained_model(self, model, model_name: str):
+        safe_name = model_name.replace(" ", "_").lower()
+        models_dir = self.output_dir / "saved_models"
+        models_dir.mkdir(parents=True, exist_ok=True)
+        if model_name == "CatBoost":
+            save_path = models_dir / f"{safe_name}_tuned.cbm"
+            model.save_model(str(save_path))
+            print(f"Tuned model saved to {save_path}")
+        elif model_name == "XGBoost":
+            save_path = models_dir / f"{safe_name}_tuned.json"
+            model.save_model(str(save_path))
+            print(f"Tuned model saved to {save_path}")
+        else:
+            save_path = models_dir / f"{safe_name}_tuned.pkl"
+            joblib.dump(model, save_path)
+            print(f"Tuned model saved to {save_path}")
+
     def _cross_validate_rmse(self, model):
         kf = KFold(n_splits=3, shuffle=True, random_state=42)
         scores = cross_val_score(model, self.X_train, self.y_train, 
@@ -95,6 +112,7 @@ class HPOTunerBenchmark:
         tuned_model = Ridge(**study.best_params)
         tuned_model.fit(self.X_train, self.y_train)
         self.evaluate_model("Ridge", "Tuned", self.y_test, tuned_model.predict(self.X_test), time.time() - start)
+        self.save_trained_model(tuned_model, "Ridge")
         print(f"Best Ridge Params: {study.best_params}")
 
     # ==========================================
@@ -134,6 +152,7 @@ class HPOTunerBenchmark:
         tuned_model = RandomForestRegressor(**best_params)
         tuned_model.fit(self.X_train, self.y_train)
         self.evaluate_model("Random Forest", "Tuned", self.y_test, tuned_model.predict(self.X_test), time.time() - start)
+        self.save_trained_model(tuned_model, "Random Forest")
         print(f"Best RF Params: {study.best_params}")
 
     # ==========================================
@@ -177,6 +196,7 @@ class HPOTunerBenchmark:
         tuned_model = XGBRegressor(**best_params)
         tuned_model.fit(self.X_train, self.y_train)
         self.evaluate_model("XGBoost", "Tuned", self.y_test, tuned_model.predict(self.X_test), time.time() - start)
+        self.save_trained_model(tuned_model, "XGBoost")
         print(f"Best XGB Params: {study.best_params}")
 
     # ==========================================
@@ -220,6 +240,7 @@ class HPOTunerBenchmark:
         tuned_model = LGBMRegressor(**best_params)
         tuned_model.fit(self.X_train, self.y_train)
         self.evaluate_model("LightGBM", "Tuned", self.y_test, tuned_model.predict(self.X_test), time.time() - start)
+        self.save_trained_model(tuned_model, "LightGBM")
         print(f"Best LGBM Params: {study.best_params}")
 
     # ==========================================
@@ -261,6 +282,7 @@ class HPOTunerBenchmark:
         tuned_model = CatBoostRegressor(**best_params)
         tuned_model.fit(self.X_train, self.y_train)
         self.evaluate_model("CatBoost", "Tuned", self.y_test, tuned_model.predict(self.X_test), time.time() - start)
+        self.save_trained_model(tuned_model, "CatBoost")
         print(f"Best CatBoost Params: {study.best_params}")
 
     def save_and_plot_results(self):
