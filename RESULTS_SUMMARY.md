@@ -11,6 +11,7 @@ Makine öğrenmesi ve derin öğrenme modellerimizin futbolcu piyasa değeri tah
 | **Random Forest** | %80.19 (0.8019) | 1.713.539 | **323.614** | 52.86 sn |
 | **XGBoost** | %77.63 (0.7763) | 1.820.758 | 331.593 | 4.12 sn |
 | **Ridge Regression** | %63.41 (0.6341) | 2.328.664 | 729.421 | 0.04 sn |
+| **TabNet** | %27.44 (0.2744) | 3.279.345 | 739.573 | 599.83 sn |
 
 *(Not: R2 Skorunun 1'e yani %100'e yakın olması, RMSE ve MAE değerlerinin ise düşük olması daha iyidir.)*
 

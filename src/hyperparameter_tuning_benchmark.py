@@ -21,7 +21,7 @@ from lightgbm import LGBMRegressor
 from catboost import CatBoostRegressor
 
 class HPOTunerBenchmark:
-    def __init__(self, input_dir: str = None, output_dir: str = None, n_trials: int = 50, test_mode: bool = False):
+    def __init__(self, input_dir: str = None, output_dir: str = None, n_trials: int = 10, test_mode: bool = False):
         base_dir = Path(__file__).parent.parent
         self.input_dir = Path(input_dir) if input_dir else base_dir / "dataset" / "model_input"
         self.output_dir = Path(output_dir) if output_dir else base_dir / "results"
@@ -85,7 +85,7 @@ class HPOTunerBenchmark:
     def _cross_validate_rmse(self, model):
         kf = KFold(n_splits=3, shuffle=True, random_state=42)
         scores = cross_val_score(model, self.X_train, self.y_train, 
-                                 scoring='neg_root_mean_squared_error', cv=kf, n_jobs=-1)
+                                 scoring='neg_root_mean_squared_error', cv=kf, n_jobs=1)
         return -scores.mean()
 
     # ==========================================
@@ -343,5 +343,5 @@ if __name__ == "__main__":
     parser.add_argument("--test", action="store_true", help="Run in fast one-shot test mode")
     args = parser.parse_args()
     
-    tuner = HPOTunerBenchmark(n_trials=50, test_mode=args.test)
+    tuner = HPOTunerBenchmark(n_trials=10, test_mode=args.test)
     tuner.run_all()
